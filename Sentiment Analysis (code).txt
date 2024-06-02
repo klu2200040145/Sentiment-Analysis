@@ -1,0 +1,34 @@
+import nltk
+from nltk.corpus import twitter_samples
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import LinearSVC
+from sklearn.metrics import classification_report
+
+nltk.download('twitter_samples')
+
+positive_tweets = twitter_samples.strings('positive_tweets.json')
+negative_tweets = twitter_samples.strings('negative_tweets.json')
+
+tweets = positive_tweets + negative_tweets
+labels = ['positive'] * len(positive_tweets) + ['negative'] * len(negative_tweets)
+df = pd.DataFrame({'text': tweets, 'sentiment': labels})
+
+X_train, X_test, y_train, y_test = train_test_split(df['text'], df['sentiment'], test_size=0.2, random_state=42)
+
+tfidf = TfidfVectorizer(stop_words='english')
+X_train_tfidf = tfidf.fit_transform(X_train)
+X_test_tfidf = tfidf.transform(X_test)
+
+classifier = LinearSVC()
+classifier.fit(X_train_tfidf, y_train)
+
+y_pred = classifier.predict(X_test_tfidf)
+
+print(classification_report(y_test, y_pred))
+
+text = "I love this product!"
+text_tfidf = tfidf.transform([text])
+sentiment = classifier.predict(text_tfidf)
+print("Predicted sentiment:", sentiment[0])
